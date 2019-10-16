@@ -1,5 +1,4 @@
 import json,logging
-import os,oss2,datetime,requests
 import mysql.connector
 from util.Global import gloVar
 

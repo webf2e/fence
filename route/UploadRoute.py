@@ -31,12 +31,15 @@ def uploadFence():
         result["time"] = time
         result["fenceChange"] = fenceChange
         result["remain"] = remain
-        PushUtil.pushToSingle("资金有变动", "当前余额为：" + remain, "")
-        # 判断是否当前余额 == 上次余额 + 本次支出
-        lastRemain = json.loads(FenceService.getLast())[0]["remain"]
-        minus = math.fabs(float(lastRemain) + float(fenceChange) - float(remain))
-        if minus > 1:
-            PushUtil.pushToSingle("资金余额有问题", "余额有" + str(minus) + "的差值", "")
+        try:
+            PushUtil.pushToSingle("资金有变动", "当前余额为：" + remain, "")
+            # 判断是否当前余额 == 上次余额 + 本次支出
+            lastRemain = json.loads(FenceService.getLast())[0]["remain"]
+            minus = math.fabs(float(lastRemain) + float(fenceChange) - float(remain))
+            if minus > 1:
+                PushUtil.pushToSingle("资金余额有问题", "余额有" + str(minus) + "的差值", "")
+        except Exception as e:
+            print("发送通知失败")
         return Response(json.dumps(result, ensure_ascii=False), mimetype='application/json')
     result["result"] = "ERROR"
     result["msg"] = "该笔记录已存在，不能重复添加"

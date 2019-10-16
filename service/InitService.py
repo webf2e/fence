@@ -1,6 +1,7 @@
 from util.Global import gloVar
 import configparser,os
 
+
 def init():
     configFilePath = os.path.join(os.getcwd(), "config/application.config")
     conf = configparser.ConfigParser()

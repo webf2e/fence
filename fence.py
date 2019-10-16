@@ -1,7 +1,7 @@
 from flask import Flask,request,abort
 from route.IndexRoute import indexRoute
 from route.UploadRoute import uploadRoute
-from  service import InitService
+from service import InitService
 
 app = Flask(__name__)
 app.register_blueprint(indexRoute)
