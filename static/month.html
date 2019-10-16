@@ -29,6 +29,9 @@
     </nav>
     <div class="container" style="width: 100%">
         <div id="inOutChart" style="width: 100%;height: 400px"></div>
+        <table class="table table-bordered" id="historyTable" style="width: 100%">
+
+        </table>
     </div>
 </body>
 <script src="/static/js/jquery.min.js"></script>
@@ -39,6 +42,7 @@
     $.ajax({
         url:"/money/getTotalInOutByMonth",
         type:"POST",
+
         data:"monthCount=" + inOutMonthCount,
         success:function(data){
             var date = [];
@@ -122,5 +126,57 @@
             echarts.init(document.getElementById("inOutChart")).setOption(option);
         }
     });
+    var pageCount = 1;
+    var pageSize = 3;
+    var totalPageCount = 0;
+    $.ajax({
+        url:"/money/getTotalPage",
+        type:"POST",
+        data:"pageSize="+pageSize,
+        success:function(count){
+            totalPageCount = count;
+            getHistory();
+        }
+    });
+
+    $(document).scroll(function(){
+        //console.log($(window).scrollTop() +","+ $(window).height() + "," + $(document).height());
+        if(pageCount <= totalPageCount){
+            if($(window).scrollTop() + $(window).height() == $(document).height()){
+                pageCount ++;
+                console.log(pageCount+","+totalPageCount);
+                if(pageCount > totalPageCount){
+                    $("#historyTable").append("<tr><td colspan='3' style='text-align: center'>没有更多的记录啦~</td></tr>");
+                }else{
+                    getHistory();
+                }
+            }
+        }
+    });
+
+    function getHistory(){
+        $.ajax({
+            url:"/money/getAllInfoByPage",
+            type:"POST",
+            data:"pageSize="+pageSize + "&pageCount=" + pageCount,
+            success:function(data){
+                var html = "";
+                $.each(data,function(i,n){
+                    var fenceChange = n["fenceChange"];
+                    var type = "收入";
+                    var alertType = "success";
+                    if(fenceChange.indexOf("-") != -1){
+                        fenceChange = fenceChange.replace("-", "");
+                        type = "支出";
+                        alertType = "danger";
+                    }
+                    html += "<tr><td>"+n["time"]+"</td><td>"+type+fenceChange+
+                        "元</td><td>余额："+n["remain"]+"</td></tr>";
+                    html += "<tr><td colspan='3'><div class=\"alert alert-"+alertType+"\" role=\"alert\">"+n["smsText"]+"</div></td></tr>";
+                });
+                $("#historyTable").append(html);
+            }
+        });
+    }
 </script>
 </html>

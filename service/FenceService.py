@@ -110,6 +110,41 @@ def getByTime(time):
     return changeToJsonStr(fields, data)
 
 
+def getCount():
+    db = mysql.connector.connect(
+        host=gloVar.dbHost,
+        user=gloVar.dbUser,
+        passwd=gloVar.dbPwd,
+        database=gloVar.dbName
+    )
+    cursor = db.cursor()
+    sql = "select count(id) from fenceFlow"
+    logging.warning("[sql]:{}".format(sql))
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    db.commit()
+    db.close()
+    return data[0][0]
+
+
+def getByPage(pageCount,pageSize):
+    db = mysql.connector.connect(
+        host=gloVar.dbHost,
+        user=gloVar.dbUser,
+        passwd=gloVar.dbPwd,
+        database=gloVar.dbName
+    )
+    cursor = db.cursor()
+    sql = "select * from fenceFlow order by time desc limit {},{}".format((pageCount - 1) * pageSize, pageSize * pageCount)
+    logging.warning("[sql]:{}".format(sql))
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    fields = cursor.description
+    db.commit()
+    db.close()
+    return changeToJsonStr(fields, data)
+
+
 def changeToJsonStr(fields,data):
     finalResult = "["
     column_list = []

@@ -28,3 +28,21 @@ def getTotalInOutByMonth():
         else:
             result[ym]["in"] += money
     return Response(json.dumps(result, ensure_ascii=False), mimetype='application/json')
+
+
+@monthRoute.route('/getAllInfoByPage',methods=["POST"])
+def getAllInfoByPage():
+    # 第几页
+    pageCount = int(request.form.get("pageCount"))
+    # 一页的大小
+    pageSize = int(request.form.get("pageSize"))
+    return Response(FenceService.getByPage(pageCount, pageSize), mimetype='application/json')
+
+@monthRoute.route('/getTotalPage',methods=["POST"])
+def getTotalPage():
+    pageSize = int(request.form.get("pageSize"))
+    allCount = FenceService.getCount()
+    allPageCount = allCount // pageSize
+    if allCount % pageSize != 0:
+        return str(allPageCount + 1)
+    return str(allPageCount)
