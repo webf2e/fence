@@ -1,11 +1,13 @@
 from flask import Flask,request,abort
 from route.IndexRoute import indexRoute
 from route.UploadRoute import uploadRoute
+from route.MonthRoute import monthRoute
 from service import InitService
 
 app = Flask(__name__)
 app.register_blueprint(indexRoute)
 app.register_blueprint(uploadRoute)
+app.register_blueprint(monthRoute)
 
 @app.route('/')
 def login():

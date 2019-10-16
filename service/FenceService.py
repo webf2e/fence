@@ -55,6 +55,7 @@ def isExist(time,remain):
         return True
     return False
 
+
 def getLast():
     db = mysql.connector.connect(
         host=gloVar.dbHost,
@@ -72,6 +73,7 @@ def getLast():
     db.close()
     return changeToJsonStr(fields, data)
 
+
 def getFences(count):
     db = mysql.connector.connect(
         host=gloVar.dbHost,
@@ -81,6 +83,24 @@ def getFences(count):
     )
     cursor = db.cursor()
     sql = "select id,time,fenceChange,remain from fenceFlow order by time desc limit 0,{}".format(count)
+    logging.warning("[sql]:{}".format(sql))
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    fields = cursor.description
+    db.commit()
+    db.close()
+    return changeToJsonStr(fields, data)
+
+
+def getByTime(time):
+    db = mysql.connector.connect(
+        host=gloVar.dbHost,
+        user=gloVar.dbUser,
+        passwd=gloVar.dbPwd,
+        database=gloVar.dbName
+    )
+    cursor = db.cursor()
+    sql = "select id,time,fenceChange,remain from fenceFlow where time > '{}' order by time desc".format(time)
     logging.warning("[sql]:{}".format(sql))
     cursor.execute(sql)
     data = cursor.fetchall()
