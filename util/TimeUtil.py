@@ -12,3 +12,8 @@ def getFullTime(MonthDayHourMin):
     fullDate = "{}年{}".format(currentYear, MonthDayHourMin)
     date = datetime.datetime.strptime(fullDate, "%Y年%m月%d日%H时%M分")
     return datetime.datetime.strftime(date, "%Y-%m-%d %H:%M:%S")
+
+
+#获取当前时间的时间戳
+def getTimestrampNow():
+    return int(datetime.datetime.now().timestamp() * 1000)

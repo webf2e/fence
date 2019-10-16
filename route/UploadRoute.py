@@ -1,7 +1,7 @@
 from flask import Blueprint,Response,request
-import json,os,datetime,re
+import json,os,datetime,re,math
 from service import FenceService
-from util import TimeUtil
+from util import TimeUtil,PushUtil
 
 uploadRoute = Blueprint('uploadRoute', __name__)
 
@@ -31,9 +31,13 @@ def uploadFence():
         result["time"] = time
         result["fenceChange"] = fenceChange
         result["remain"] = remain
+        PushUtil.pushToSingle("资金有变动", "当前余额为：" + remain, "", "ebf1bb273987b142a92e44f2e908a8cd")
+        # 判断是否当前余额 == 上次余额 + 本次支出
+        lastRemain = json.loads(FenceService.getLast())[0]["remain"]
+        minus = math.fabs(float(lastRemain) + float(fenceChange) - float(remain))
+        if minus > 1:
+            PushUtil.pushToSingle("资金余额有问题", "余额有" + str(minus) + "的差值", "", "ebf1bb273987b142a92e44f2e908a8cd")
         return Response(json.dumps(result, ensure_ascii=False), mimetype='application/json')
-
-
     result["result"] = "ERROR"
     result["msg"] = "该笔记录已存在，不能重复添加"
     return Response(json.dumps(result, ensure_ascii=False), mimetype='application/json')
