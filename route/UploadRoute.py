@@ -31,7 +31,7 @@ def uploadFence():
         result["time"] = time
         result["fenceChange"] = fenceChange
         result["remain"] = remain
-        PushUtil.pushToSingle("资金有变动", "当前余额为：" + remain, "", "ebf1bb273987b142a92e44f2e908a8cd")
+        PushUtil.pushToSingle("资金有变动", "当前余额为：" + remain, "")
         # 判断是否当前余额 == 上次余额 + 本次支出
         lastRemain = json.loads(FenceService.getLast())[0]["remain"]
         minus = math.fabs(float(lastRemain) + float(fenceChange) - float(remain))
