@@ -36,7 +36,7 @@ def uploadFence():
         lastRemain = json.loads(FenceService.getLast())[0]["remain"]
         minus = math.fabs(float(lastRemain) + float(fenceChange) - float(remain))
         if minus > 1:
-            PushUtil.pushToSingle("资金余额有问题", "余额有" + str(minus) + "的差值", "", "ebf1bb273987b142a92e44f2e908a8cd")
+            PushUtil.pushToSingle("资金余额有问题", "余额有" + str(minus) + "的差值", "")
         return Response(json.dumps(result, ensure_ascii=False), mimetype='application/json')
     result["result"] = "ERROR"
     result["msg"] = "该笔记录已存在，不能重复添加"
