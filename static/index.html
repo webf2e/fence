@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>资金管理后台</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+</head>
+<body>
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">资金管理后台</a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+            <li><a href="/money/static/index.html">资金统计</a></li>
+            <li><a href="/money/static/upload.html">短信上传</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container" style="width: 100%">
+      <div id="lastFenceTime" style="color: #6f6f6f;font-size: 6pt"></div>
+      <table style="width: 100%">
+        <tr>
+          <td width="50%">
+            <div class="panel panel-default">
+              <div class="panel-body" id="currentRemain" style="text-align: center">
+
+              </div>
+            </div>
+          </td>
+          <td width="50%">
+            <div class="panel panel-default">
+              <div class="panel-body" id="currentFenceChange" style="text-align: center">
+
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+      <div id="inOutChart" style="width: 100%;height: 300px"></div>
+      <div id="remainChart" style="width: 100%;height: 300px"></div>
+    </div>
+
+</body>
+<script src="/static/js/jquery.min.js"></script>
+<script src="/static/js/bootstrap.min.js"></script>
+<script src="/static/js/echarts.common.min.js"></script>
+<script>
+  var fenceCount = 10;
+
+  var labelRight = {
+      normal: {
+          position: 'right'
+      }
+  };
+
+  $.ajax({
+    url:"/money/current",
+    type:"POST",
+    success:function(data){
+      data = data[0];
+      var currentRemain = "当前卡内余额<br/><b>" + data["remain"] + "</b>元";
+      $("#currentRemain").html(currentRemain);
+      var fenceChange = data["fenceChange"];
+      var currentFenceChange = "最近一笔";
+      var color = "";
+      if(fenceChange.indexOf("-") != -1){
+        fenceChange = fenceChange.replace("-","");
+        currentFenceChange += "支出";
+        color = "red";
+      }else{
+        currentFenceChange += "收入";
+        color = "green";
+      }
+      currentFenceChange += "<br/>";
+      currentFenceChange += "<span style='color: "+color+"'><b>"+fenceChange + "</b></span>元";
+      $("#currentFenceChange").html(currentFenceChange);
+      $("#lastFenceTime").html("最后一笔时间：" + data["time"]);
+    }
+  });
+  $.ajax({
+    url:"/money/getFences",
+    type:"POST",
+    data:"count=" + fenceCount,
+    success:function(data){
+      var date = [];
+      var lineDate = [];
+      var remain = [];
+      var d = [];
+      $.each(data,function(i,n){
+        date.push(n["time"]);
+        lineDate.unshift(n["time"]);
+        remain.unshift(n["remain"] * 1);
+        var money = n["fenceChange"] + "";
+        if(money.indexOf("-") != -1){
+          var m = {}
+          m["value"] = money;
+          m["label"] = labelRight;
+          d.push(m);
+        }else{
+          d.push(money);
+        }
+      });
+      console.log(d);
+      var option = {
+          title: {
+              text: '最近' + fenceCount + "笔收支"
+          },
+          tooltip : {
+              trigger: 'axis',
+              axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+                  type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+              }
+          },
+          grid: {
+              top: 80,
+              bottom: 30
+          },
+          xAxis: {
+              type : 'value',
+              position: 'top',
+              splitLine: {lineStyle:{type:'dashed'}},
+          },
+          yAxis: {
+              type : 'category',
+              axisLine: {show: false},
+              axisLabel: {show: false},
+              axisTick: {show: false},
+              splitLine: {show: false},
+              data : date
+          },
+          series : [
+              {
+                  name:'金额',
+                  type:'bar',
+                  label: {
+                      normal: {
+                          show: true,
+                          formatter: '{b}'
+                      }
+                  },
+                  data:d
+              }
+          ]
+      };
+      echarts.init(document.getElementById("inOutChart")).setOption(option);
+
+      console.log(remain);
+      console.log(lineDate);
+      var option = {
+            title: {
+                text: '最近' + fenceCount + "笔余额"
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            toolbox: { //可视化的工具箱
+                show: true,
+                feature: {
+                    dataView: { //数据视图
+                        show: true
+                    },
+                    restore: { //重置
+                        show: true
+                    },
+                    dataZoom: { //数据缩放视图
+                        show: true
+                    },
+                    saveAsImage: {//保存图片
+                        show: true
+                    },
+                    magicType: {//动态类型切换
+                        type: ['bar', 'line']
+                    }
+                }
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: lineDate
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [
+                {
+                    name:name,
+                    type:'line',
+                    data:remain
+                }
+
+            ]
+        };
+      echarts.init(document.getElementById("remainChart")).setOption(option);
+    }
+  });
+</script>
+</html>
