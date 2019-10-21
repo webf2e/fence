@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>资金管理后台</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+</head>
+<body>
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">资金管理后台</a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+            <li><a href="/money/static/index.html">资金统计</a></li>
+            <li><a href="/money/static/month.html">月度统计</a></li>
+            <li><a href="/money/static/upload.html">短信上传</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container" style="width: 100%">
+        <div id="inOutChart" style="width: 100%;height: 400px"></div>
+        <table class="table table-bordered" id="historyTable" style="width: 100%">
+
+        </table>
+    </div>
+</body>
+<script src="/static/js/jquery.min.js"></script>
+<script src="/static/js/bootstrap.min.js"></script>
+<script src="/static/js/echarts.common.min.js"></script>
+<script>
+    var inOutMonthCount = 6;
+    $.ajax({
+        url:"/money/getTotalInOutByMonth",
+        type:"POST",
+
+        data:"monthCount=" + inOutMonthCount,
+        success:function(data){
+            var date = [];
+            var inMoney = [];
+            var outMoney = [];
+            var minusMoney = [];
+            $.each(data,function(i,n){
+                date.push(i);
+                inMoney.push(n["in"]);
+                outMoney.push(n["out"]);
+                minusMoney.push((n["out"] + n["in"]).toFixed(2));
+            });
+            option = {
+                title: {
+                    text: "历史收支"
+                },
+                tooltip : {
+                    trigger: 'axis',
+                    axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+                        type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+                    }
+                },
+                legend: {
+                    data:['总和', '支出', '收入']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis : [
+                    {
+                        type : 'value'
+                    }
+                ],
+                yAxis : [
+                    {
+                        type : 'category',
+                        axisTick : {show: false},
+                        data : date
+                    }
+                ],
+                series : [
+                    {
+                        name:'总和',
+                        type:'bar',
+                        label: {
+                            normal: {
+                                show: true,
+                                position: 'inside'
+                            }
+                        },
+                        data:minusMoney
+                    },
+                    {
+                        name:'收入',
+                        type:'bar',
+                        stack: '总量',
+                        label: {
+                            normal: {
+                                show: true
+                            }
+                        },
+                        data: inMoney
+                    },
+                    {
+                        name:'支出',
+                        type:'bar',
+                        stack: '总量',
+                        label: {
+                            normal: {
+                                show: true,
+                                position: 'left'
+                            }
+                        },
+                        data:outMoney
+                    }
+                ]
+            };
+            echarts.init(document.getElementById("inOutChart")).setOption(option);
+        }
+    });
+    var pageCount = 1;
+    var pageSize = 3;
+    var totalPageCount = 0;
+    $.ajax({
+        url:"/money/getTotalPage",
+        type:"POST",
+        data:"pageSize="+pageSize,
+        success:function(count){
+            totalPageCount = count;
+            getHistory();
+        }
+    });
+
+    $(document).scroll(function(){
+        //console.log($(window).scrollTop() +","+ $(window).height() + "," + $(document).height());
+        if(pageCount <= totalPageCount){
+            if($(window).scrollTop() + $(window).height() == $(document).height()){
+                pageCount ++;
+                console.log(pageCount+","+totalPageCount);
+                if(pageCount > totalPageCount){
+                    $("#historyTable").append("<tr><td colspan='3' style='text-align: center'>没有更多的记录啦~</td></tr>");
+                }else{
+                    getHistory();
+                }
+            }
+        }
+    });
+
+    function getHistory(){
+        $.ajax({
+            url:"/money/getAllInfoByPage",
+            type:"POST",
+            data:"pageSize="+pageSize + "&pageCount=" + pageCount,
+            success:function(data){
+                var html = "";
+                $.each(data,function(i,n){
+                    var fenceChange = n["fenceChange"];
+                    var type = "收入";
+                    var alertType = "success";
+                    if(fenceChange.indexOf("-") != -1){
+                        fenceChange = fenceChange.replace("-", "");
+                        type = "支出";
+                        alertType = "danger";
+                    }
+                    html += "<tr><td>"+n["time"]+"</td><td>"+type+fenceChange+
+                        "元</td><td>余额："+n["remain"]+"</td></tr>";
+                    html += "<tr><td colspan='3'><div class=\"alert alert-"+alertType+"\" role=\"alert\">"+n["smsText"]+"</div></td></tr>";
+                });
+                $("#historyTable").append(html);
+            }
+        });
+    }
+</script>
+</html>
