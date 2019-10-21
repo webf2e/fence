@@ -26,6 +26,7 @@ def uploadFence():
         return Response(json.dumps(result, ensure_ascii=False), mimetype='application/json')
 
     if not FenceService.isExist(time,remain):
+        lastRemain = json.loads(FenceService.getLast())[0]["remain"]
         FenceService.insert(time,fenceChange,remain,sms)
         result["result"] = "OK"
         result["time"] = time
@@ -34,7 +35,7 @@ def uploadFence():
         try:
             PushUtil.pushToSingle("资金有变动", "当前余额为：" + remain, "")
             # 判断是否当前余额 == 上次余额 + 本次支出
-            lastRemain = json.loads(FenceService.getLast())[0]["remain"]
+            print("lastRemain:{}, fenceChange:{}, remain:{}".format(lastRemain,fenceChange,remain))
             minus = math.fabs(float(lastRemain) + float(fenceChange) - float(remain))
             if minus > 1:
                 PushUtil.pushToSingle("资金余额有问题", "余额有" + str(minus) + "的差值", "")
