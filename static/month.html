@@ -38,11 +38,12 @@
 <script src="/static/js/bootstrap.min.js"></script>
 <script src="/static/js/echarts.common.min.js"></script>
 <script>
+    var prefix = "/money";
+    //var prefix = "";
     var inOutMonthCount = 6;
     $.ajax({
-        url:"/money/getTotalInOutByMonth",
+        url:prefix + "/getTotalInOutByMonth",
         type:"POST",
-
         data:"monthCount=" + inOutMonthCount,
         success:function(data){
             var date = [];
@@ -50,7 +51,7 @@
             var outMoney = [];
             var minusMoney = [];
             $.each(data,function(i,n){
-                date.push(i);
+                date.push(i.replace("20",""));
                 inMoney.push(n["in"]);
                 outMoney.push(n["out"]);
                 minusMoney.push((n["out"] + n["in"]).toFixed(2));
@@ -69,8 +70,8 @@
                     data:['总和', '支出', '收入']
                 },
                 grid: {
-                    left: '3%',
-                    right: '4%',
+                    left: '1%',
+                    right: '1%',
                     bottom: '3%',
                     containLabel: true
                 },
@@ -130,7 +131,7 @@
     var pageSize = 3;
     var totalPageCount = 0;
     $.ajax({
-        url:"/money/getTotalPage",
+        url:prefix + "/getTotalPage",
         type:"POST",
         data:"pageSize="+pageSize,
         success:function(count){
@@ -156,9 +157,10 @@
 
     function getHistory(){
         $.ajax({
-            url:"/money/getAllInfoByPage",
+            url:prefix + "/getAllInfoByPage",
             type:"POST",
             data:"pageSize="+pageSize + "&pageCount=" + pageCount,
+            async:false,
             success:function(data){
                 var html = "";
                 $.each(data,function(i,n){

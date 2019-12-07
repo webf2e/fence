@@ -47,7 +47,7 @@
           </td>
         </tr>
       </table>
-      <div id="inOutChart" style="width: 100%;height: 300px"></div>
+      <div id="inOutChart" style="width: 100%;height: 350px"></div>
       <div id="remainChart" style="width: 100%;height: 300px"></div>
     </div>
 
@@ -55,8 +55,12 @@
 <script src="/static/js/jquery.min.js"></script>
 <script src="/static/js/bootstrap.min.js"></script>
 <script src="/static/js/echarts.common.min.js"></script>
+<script src="/static/js/echarts.min.js"></script>
 <script>
-  var fenceCount = 10;
+  var prefix = "/money";
+  //var prefix = "";
+  var fenceCount4InOut = 10;
+  var fenceCount4His = 100;
 
   var labelRight = {
       normal: {
@@ -65,7 +69,7 @@
   };
 
   $.ajax({
-    url:"/money/current",
+    url:prefix + "/current",
     type:"POST",
     success:function(data){
       data = data[0];
@@ -89,9 +93,9 @@
     }
   });
   $.ajax({
-    url:"/money/getFences",
+    url:prefix + "/getInOutFences",
     type:"POST",
-    data:"count=" + fenceCount,
+    data:"count=" + fenceCount4InOut,
     success:function(data){
       var date = [];
       var lineDate = [];
@@ -111,10 +115,21 @@
           d.push(money);
         }
       });
-      console.log(d);
       var option = {
+          visualMap: {
+            orient: 'horizontal',
+            left: 'center',
+            min: 0,
+            max: 1,
+            text: ['收入', '支出'],
+            // Map the score column to color
+            dimension: 0,
+            inRange: {
+                color: ['#0495da', '#E15457']
+            }
+        },
           title: {
-              text: '最近' + fenceCount + "笔收支"
+              text: '最近' + fenceCount4InOut + "笔收支"
           },
           tooltip : {
               trigger: 'axis',
@@ -154,12 +169,45 @@
           ]
       };
       echarts.init(document.getElementById("inOutChart")).setOption(option);
+    }
+  });
 
-      console.log(remain);
-      console.log(lineDate);
+
+
+  $.ajax({
+    url:prefix + "/getHisFences",
+    type:"POST",
+    data:"count=" + fenceCount4His,
+    success:function(data){
+      var date = [];
+      var lineDate = [];
+      var remain = [];
+      var d = [];
+      $.each(data,function(i,n){
+        date.push(n["time"]);
+        lineDate.unshift(n["time"]);
+        remain.unshift(n["remain"] * 1);
+        var money = n["fenceChange"] + "";
+        if(money.indexOf("-") != -1){
+          var m = {}
+          m["value"] = money;
+          m["label"] = labelRight;
+          d.push(m);
+        }else{
+          d.push(money);
+        }
+      });
+
       var option = {
+            visualMap: {
+                show: false,
+                type: 'continuous',
+                seriesIndex: 0,
+                min: 0,
+                max: 100000
+            },
             title: {
-                text: '最近' + fenceCount + "笔余额"
+                text: '最近' + fenceCount4His + "笔余额"
             },
             tooltip: {
                 trigger: 'axis'
@@ -203,9 +251,48 @@
                 {
                     name:name,
                     type:'line',
-                    data:remain
+                    data:remain,
+                    smooth: true,
+                    lineStyle: {
+                        normal: {
+                            width: 3,
+                            shadowColor: 'rgba(0,0,0,0.4)',
+                            shadowBlur: 8,
+                            shadowOffsetY: 5
+                        }
+                    },
+                    markLine: {
+                        data: [
+                            [{
+                                symbol: 'none',
+                                x: '80%',
+                                yAxis: 'max'
+                            }, {
+                                symbol: 'circle',
+                                label: {
+                                    normal: {
+                                        position: 'start',
+                                        formatter: '最大存款'
+                                    }
+                                },
+                                type: 'max'
+                            }],[{
+                                symbol: 'none',
+                                x: '80%',
+                                yAxis: 'min'
+                            }, {
+                                symbol: 'circle',
+                                label: {
+                                    normal: {
+                                        position: 'start',
+                                        formatter: '最小存款'
+                                    }
+                                },
+                                type: 'min'
+                            }]
+                        ]
+                    }
                 }
-
             ]
         };
       echarts.init(document.getElementById("remainChart")).setOption(option);

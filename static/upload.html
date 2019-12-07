@@ -37,6 +37,8 @@
 <script src="/static/js/jquery.min.js"></script>
 <script src="/static/js/bootstrap.min.js"></script>
 <script>
+    var prefix = "/money";
+    //var prefix = "";
     $("#uploadBtn").click(function(){
         var smsText = $("textarea").val();
         if("" == smsText){
@@ -45,7 +47,7 @@
             return false;
         }
         $.ajax({
-            url:"/money/uploadFence",
+            url:prefix + "/uploadFence",
             type:"POST",
             data:"sms=" + smsText,
             beforeSend:function(){
