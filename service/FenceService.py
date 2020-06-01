@@ -20,7 +20,7 @@ def getAll():
     db.close()
     return json.loads(changeToJsonStr(fields, data))
 
-def insert(time, fenceChange, remain, smsText):
+def insert(time, fenceChange, remain, smsText, reason):
     db = mysql.connector.connect(
         host=gloVar.dbHost,
         user=gloVar.dbUser,
@@ -28,8 +28,8 @@ def insert(time, fenceChange, remain, smsText):
         database=gloVar.dbName
     )
     cursor = db.cursor()
-    sql = "insert into fenceFlow(time,fenceChange,remain,smsText) VALUES ('{}','{}','{}','{}')"\
-        .format(time, fenceChange, remain, smsText)
+    sql = "insert into fenceFlow(time,fenceChange,remain,smsText,reason) VALUES ('{}','{}','{}','{}','{}')"\
+        .format(time, fenceChange, remain, smsText, reason)
     logging.warning("[sql]:{}".format(sql))
     cursor.execute(sql)
     db.commit()
@@ -143,6 +143,36 @@ def getByPage(pageCount,pageSize):
     db.commit()
     db.close()
     return changeToJsonStr(fields, data)
+
+def changeReason(id, reason):
+    db = mysql.connector.connect(
+        host=gloVar.dbHost,
+        user=gloVar.dbUser,
+        passwd=gloVar.dbPwd,
+        database=gloVar.dbName
+    )
+    cursor = db.cursor()
+    sql = "update fenceFlow set reason = '{}' where id={}".format(reason, id)
+    logging.warning("[sql]:{}".format(sql))
+    cursor.execute(sql)
+    db.commit()
+    db.close()
+
+def getById(id):
+    db = mysql.connector.connect(
+        host=gloVar.dbHost,
+        user=gloVar.dbUser,
+        passwd=gloVar.dbPwd,
+        database=gloVar.dbName
+    )
+    cursor = db.cursor()
+    sql = "select * from fenceFlow where id = {}".format(id)
+    logging.warning("[sql]:{}".format(sql))
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    db.commit()
+    db.close()
+    return data[0]
 
 
 def changeToJsonStr(fields,data):

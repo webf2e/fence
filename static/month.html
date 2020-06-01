@@ -38,8 +38,8 @@
 <script src="/static/js/bootstrap.min.js"></script>
 <script src="/static/js/echarts.common.min.js"></script>
 <script>
-    var prefix = "/money";
-    //var prefix = "";
+    //var prefix = "/money";
+    var prefix = "";
     var inOutMonthCount = 6;
     $.ajax({
         url:prefix + "/getTotalInOutByMonth",
@@ -174,11 +174,42 @@
                     }
                     html += "<tr><td>"+n["time"]+"</td><td>"+type+fenceChange+
                         "元</td><td>余额："+n["remain"]+"</td></tr>";
+                    html += "<tr><td colspan='3'><span class='reasonOrigin'>"+n["reason"]+"</span>&nbsp;<button msgId='"+n["id"]+"' style='display:none' class='btn btn-default btn-xs'>修改</button></tr>";
                     html += "<tr><td colspan='3'><div class=\"alert alert-"+alertType+"\" role=\"alert\">"+n["smsText"]+"</div></td></tr>";
                 });
                 $("#historyTable").append(html);
+                $(".btn-xs").click(function(){
+                    if($(this).html() == "修改"){
+                        var reason = $(this).prev().text();
+                        $(this).prev().html("<input class='form-control reasonInput' value='"+reason+"'/>");
+                        $(this).html("提交");
+                    }else{
+                        var btn = $(this);
+                        var pre = $(this).prev();
+                        var newReason = $(".reasonInput").val();
+                        var id = $(this).attr("msgId");
+                        $.ajax({
+                            url:prefix + "/changeReason",
+                            type:"POST",
+                            data:"id="+id + "&reason=" + newReason,
+                            success:function(reason){
+                                pre.html(reason);
+                                btn.html("修改");
+                            }
+                        });
+                    }
+
+                });
+                $(".btn-xs").show();
             }
         });
     }
+    var i = 0;
+    $(document).click(function (){
+        i ++;
+        if(i > 10){
+            $(".btn-xs").show();
+        }
+    });
 </script>
 </html>

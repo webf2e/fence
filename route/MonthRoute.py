@@ -1,8 +1,7 @@
 from flask import Blueprint,Response,request
-import json,os,datetime,re,math
+import json,datetime
 from service import FenceService
 from dateutil.relativedelta import relativedelta
-from util import TimeUtil,PushUtil
 
 monthRoute = Blueprint('monthRoute', __name__)
 
@@ -46,3 +45,10 @@ def getTotalPage():
     if allCount % pageSize != 0:
         return str(allPageCount + 1)
     return str(allPageCount)
+
+@monthRoute.route('/changeReason',methods=["POST"])
+def changeReason():
+    id = int(request.form.get("id"))
+    reason = request.form.get("reason")
+    FenceService.changeReason(id, reason)
+    return str(FenceService.getById(id)[5])

@@ -29,6 +29,7 @@
     </nav>
     <div class="container" style="width: 100%">
         <textarea class="form-control" rows="5" placeholder="请填写银行短信内容"></textarea>
+        <input id="reasonInput" type="text" class="form-control" placeholder="请填写此款项的备注信息，如：转入定期">
         <hr style="margin-top: 5px;margin-bottom: 5px"/>
         <button id="uploadBtn" class="btn btn-primary" style="width: 100%">提交内容</button>
         <div id="result"></div>
@@ -37,19 +38,25 @@
 <script src="/static/js/jquery.min.js"></script>
 <script src="/static/js/bootstrap.min.js"></script>
 <script>
-    var prefix = "/money";
-    //var prefix = "";
+    //var prefix = "/money";
+    var prefix = "";
     $("#uploadBtn").click(function(){
         var smsText = $("textarea").val();
+        var reason = $("#reasonInput").val();
         if("" == smsText){
             $("#result").html("请填写银行短信内容");
+            $("#result").css("color","red");
+            return false;
+        }
+        if("" == reason){
+            $("#result").html("请填写此款项的备注信息");
             $("#result").css("color","red");
             return false;
         }
         $.ajax({
             url:prefix + "/uploadFence",
             type:"POST",
-            data:"sms=" + smsText,
+            data:"sms=" + smsText + "&reason="+reason,
             beforeSend:function(){
                 $("#result").html("");
             },

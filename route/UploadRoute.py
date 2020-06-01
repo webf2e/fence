@@ -10,6 +10,7 @@ def uploadFence():
     result = {}
     try:
         sms = str(request.form.get("sms")).strip()
+        reason = str(request.form.get("reason")).strip()
         inOrOut = ""
         if sms.find("支出") != -1:
             inOrOut = "-"
@@ -27,7 +28,7 @@ def uploadFence():
 
     if not FenceService.isExist(time,remain):
         lastRemain = json.loads(FenceService.getLast())[0]["remain"]
-        FenceService.insert(time,fenceChange,remain,sms)
+        FenceService.insert(time,fenceChange,remain,sms,reason)
         result["result"] = "OK"
         result["time"] = time
         result["fenceChange"] = fenceChange
