@@ -38,8 +38,8 @@
 <script src="/static/js/bootstrap.min.js"></script>
 <script src="/static/js/echarts.common.min.js"></script>
 <script>
-    //var prefix = "/money";
-    var prefix = "";
+    var prefix = "/money";
+    //var prefix = "";
     var inOutMonthCount = 6;
     $.ajax({
         url:prefix + "/getTotalInOutByMonth",
@@ -200,7 +200,6 @@
                     }
 
                 });
-                $(".btn-xs").show();
             }
         });
     }
