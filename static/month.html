@@ -32,6 +32,11 @@
         <table class="table table-bordered" id="historyTable" style="width: 100%">
 
         </table>
+        <table class="table" style="width: 100%">
+            <tr>
+                <td align="center"><button id="showMoreBtn" class="btn btn-default">更多记录</button></td>
+            </tr>
+        </table>
     </div>
 </body>
 <script src="/static/js/jquery.min.js"></script>
@@ -140,17 +145,15 @@
         }
     });
 
-    $(document).scroll(function(){
-        //console.log($(window).scrollTop() +","+ $(window).height() + "," + $(document).height());
+    $("#showMoreBtn").click(function(){
         if(pageCount <= totalPageCount){
-            if($(window).scrollTop() + $(window).height() == $(document).height()){
-                pageCount ++;
-                console.log(pageCount+","+totalPageCount);
-                if(pageCount > totalPageCount){
-                    $("#historyTable").append("<tr><td colspan='3' style='text-align: center'>没有更多的记录啦~</td></tr>");
-                }else{
-                    getHistory();
-                }
+            pageCount ++;
+            console.log(pageCount+","+totalPageCount);
+            if(pageCount > totalPageCount){
+                $("#historyTable").append("<tr><td colspan='3' style='text-align: center'>没有更多的记录啦~</td></tr>");
+                $("#showMoreBtn").hide();
+            }else{
+                getHistory();
             }
         }
     });

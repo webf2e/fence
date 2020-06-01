@@ -135,7 +135,7 @@ def getByPage(pageCount,pageSize):
         database=gloVar.dbName
     )
     cursor = db.cursor()
-    sql = "select * from fenceFlow order by time desc limit {},{}".format((pageCount - 1) * pageSize, pageSize * pageCount)
+    sql = "select * from fenceFlow order by time desc limit {},{}".format((pageCount - 1) * pageSize, pageSize)
     logging.warning("[sql]:{}".format(sql))
     cursor.execute(sql)
     data = cursor.fetchall()
