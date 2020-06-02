@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>资金管理后台</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+</head>
+<body>
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">资金管理后台</a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+            <li><a href="/money/static/index.html">资金统计</a></li>
+            <li><a href="/money/static/month.html">月度统计</a></li>
+            <li><a href="/money/static/detail.html">明细查询</a></li>
+            <li><a href="/money/static/upload.html">短信上传</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container" style="width: 100%">
+        <table>
+            <tr>
+                <td><input class="form-control" id="startTimeInput" placeholder="开始时间20200602"/></td>
+                <td><input class="form-control" id="endTimeInput" placeholder="结束时间20200602"/></td>
+                <td><button id="searchTimeBtn" class="btn btn-default">查询</button></td>
+            </tr>
+        </table>
+        <div id="historyPanel" style="width: 100%;margin-top: 20px">
+
+        </div>
+        <table style="width: 100%;margin-bottom: 10px" id="showMoreBtn">
+            <tr>
+                <td align="center"><button class="btn btn-default">更多记录</button></td>
+            </tr>
+        </table>
+    </div>
+</body>
+<script src="/static/js/jquery.min.js"></script>
+<script src="/static/js/bootstrap.min.js"></script>
+<script src="/static/js/echarts.common.min.js"></script>
+<script>
+    var prefix = "/money";
+    //var prefix = "";
+    var searchStartTime = "";
+    var searchEndTime = "";
+    $("#searchTimeBtn").click(function(){
+        searchStartTime = $("#startTimeInput").val();
+        searchEndTime = $("#endTimeInput").val();
+        pageCount = 1;
+        getTotalPage();
+        $("#historyPanel").html("");
+        $("#showMoreBtn").show();
+    });
+
+
+    var pageCount = 1;
+    var pageSize = 3;
+    var totalPageCount = 0;
+    getTotalPage();
+    function getTotalPage(){
+        $.ajax({
+            url:prefix + "/getTotalPage",
+            type:"POST",
+            data:"pageSize="+pageSize+"&startTime="+searchStartTime+"&endTime="+searchEndTime,
+            success:function(count){
+                totalPageCount = count;
+                getHistory();
+            }
+        });
+    }
+
+    $("#showMoreBtn").click(function(){
+        if(pageCount <= totalPageCount){
+            pageCount ++;
+            console.log(pageCount+","+totalPageCount);
+            if(pageCount > totalPageCount){
+                $("#historyPanel").append("<div style='width:100%;text-align:center'>没有更多的记录啦~</div>");
+                $("#showMoreBtn").hide();
+            }else{
+                getHistory();
+            }
+        }
+    });
+
+    function getHistory(){
+        $.ajax({
+            url:prefix + "/getAllInfoByPage",
+            type:"POST",
+            data:"pageSize="+pageSize + "&pageCount=" + pageCount+"&startTime="+searchStartTime+"&endTime="+searchEndTime,
+            async:false,
+            success:function(data){
+                var html = "";
+                $.each(data,function(i,n){
+                    html += getPanel(n);
+                });
+                $("#historyPanel").append(html);
+                $(".btn-xs").click(function(){
+                    if($(this).html() == "修改"){
+                        var reason = $(this).prev().text();
+                        $(this).prev().html("<input class='form-control reasonInput' value='"+reason+"'/>");
+                        $(this).html("提交");
+                    }else{
+                        var btn = $(this);
+                        var pre = $(this).prev();
+                        var newReason = $(".reasonInput").val();
+                        var id = $(this).attr("msgId");
+                        $.ajax({
+                            url:prefix + "/changeReason",
+                            type:"POST",
+                            data:"id="+id + "&reason=" + newReason,
+                            success:function(reason){
+                                pre.html(reason);
+                                btn.html("修改");
+                            }
+                        });
+                    }
+
+                });
+            }
+        });
+    }
+    var i = 0;
+    $(document).click(function (){
+        i ++;
+        if(i > 10){
+            $(".btn-xs").show();
+            i = 0;
+        }
+    });
+
+    function getPanel(n){
+        console.log(n);
+        var html = "";
+        var fenceChange = n["fenceChange"];
+        var type = "收入";
+        var alertType = "success";
+        if(fenceChange.indexOf("-") != -1){
+            fenceChange = fenceChange.replace("-", "");
+            type = "支出";
+            alertType = "danger";
+        }
+        html += "<div class=\"panel panel-"+alertType+"\">";
+        html += "<div class=\"panel-heading\">";
+        html += "<h3 class=\"panel-title\">"+n["time"]+"&nbsp;</h3>";
+        html += "</div>";
+        html += "<div class=\"panel-body\" style='padding:5px'>";
+        html += "<table class='table table-bordered' style='margin:0'><tr>";
+        html += "<td>"+type+fenceChange+"</td>";
+        html += "<td>余额："+n["remain"]+"</td>";
+        html += "</tr>";
+        html += "<tr>";
+        html += "<td colspan=2>"+n["reason"]+"</td>";
+        html += "</tr>";
+        html += "<tr>";
+        html += "<td colspan=2><div class=\"alert alert-"+alertType+"\" role=\"alert\" style='margin-bottom:4px'>"+n["smsText"]+"</div></td>";
+        html += "</tr>";
+        html += "</table>";
+        html += "</div></div>";
+        return html;
+    }
+</script>
+</html>

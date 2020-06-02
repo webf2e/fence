@@ -1,5 +1,5 @@
 from flask import Blueprint,Response,request
-import json,datetime
+import json,datetime,math
 from service import FenceService
 from dateutil.relativedelta import relativedelta
 
@@ -29,38 +29,40 @@ def getTotalInOutByMonth():
     return Response(json.dumps(result, ensure_ascii=False), mimetype='application/json')
 
 
-@monthRoute.route('/getAllInfoByPage',methods=["POST"])
-def getAllInfoByPage():
-    # 第几页
-    pageCount = int(request.form.get("pageCount"))
-    # 一页的大小
-    pageSize = int(request.form.get("pageSize"))
-    startTime = request.form.get("startTime")
-    endTime = request.form.get("endTime")
-    if "" == startTime:
-        startTime = "00010101"
-    if "" == endTime:
-        endTime = "20691231"
-    return Response(FenceService.getByPage(startTime, endTime, pageCount, pageSize), mimetype='application/json')
+@monthRoute.route('/getLastData', methods=["POST"])
+def getLastData():
+    return Response(FenceService.getLast(), mimetype='application/json')
 
-@monthRoute.route('/getTotalPage',methods=["POST"])
-def getTotalPage():
-    pageSize = int(request.form.get("pageSize"))
-    startTime = request.form.get("startTime")
-    endTime = request.form.get("endTime")
-    if "" == startTime:
-        startTime = "00010101"
-    if "" == endTime:
-        endTime = "20691231"
-    allCount = FenceService.getCount(startTime, endTime)
-    allPageCount = allCount // pageSize
-    if allCount % pageSize != 0:
-        return str(allPageCount + 1)
-    return str(allPageCount)
+@monthRoute.route('/getMonthTongji', methods=["POST"])
+def getMonthTongji():
+    month = request.form.get("month")
+    result = {}
+    datas = json.loads(FenceService.getByMonth(month))
+    inCount = 0
+    outCount = 0
+    totalIn = 0
+    totalOut = 0
+    inList = []
+    outList = []
+    for data in datas:
+        money = float(data["fenceChange"])
+        if money < 0:
+            inCount += 1
+            totalOut += money
+            outList.append({"item": data["reason"], "val": math.fabs(money)})
+        else:
+            outCount += 1
+            totalIn += money
+            inList.append({"item": data["reason"], "val": money})
+    result["inCount"] = inCount
+    result["outCount"] = outCount
+    result["totalIn"] = totalIn
+    result["totalOut"] = math.fabs(totalOut)
+    result["inList"] = inList
+    result["outList"] = outList
+    return Response(json.dumps(result), mimetype='application/json')
 
-@monthRoute.route('/changeReason',methods=["POST"])
-def changeReason():
-    id = int(request.form.get("id"))
-    reason = request.form.get("reason")
-    FenceService.changeReason(id, reason)
-    return str(FenceService.getById(id)[5])
+
+@monthRoute.route('/getAllMonth', methods=["POST"])
+def getAllMonth():
+    return Response(json.dumps(FenceService.getAllMonth()), mimetype='application/json')

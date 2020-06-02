@@ -22,6 +22,7 @@
           <ul class="nav navbar-nav">
             <li><a href="/money/static/index.html">资金统计</a></li>
             <li><a href="/money/static/month.html">月度统计</a></li>
+            <li><a href="/money/static/detail.html">明细查询</a></li>
             <li><a href="/money/static/upload.html">短信上传</a></li>
           </ul>
         </div>
@@ -29,21 +30,9 @@
     </nav>
     <div class="container" style="width: 100%">
         <div id="inOutChart" style="width: 100%;height: 400px"></div>
-        <table>
-            <tr>
-                <td><input class="form-control" id="startTimeInput" placeholder="开始时间20200602"/></td>
-                <td><input class="form-control" id="endTimeInput" placeholder="结束时间20200602"/></td>
-                <td><button id="searchTimeBtn" class="btn btn-default">查询</button></td>
-            </tr>
-        </table>
-        <table class="table table-bordered" id="historyTable" style="width: 100%">
-
-        </table>
-        <table class="table" style="width: 100%">
-            <tr>
-                <td align="center"><button id="showMoreBtn" class="btn btn-default">更多记录</button></td>
-            </tr>
-        </table>
+        <hr/>
+        <select class="form-control" id="monthSelector"></select>
+        <div id="monthTongji" style="width: 100%;"></div>
     </div>
 </body>
 <script src="/static/js/jquery.min.js"></script>
@@ -53,16 +42,6 @@
     var prefix = "/money";
     //var prefix = "";
     var inOutMonthCount = 6;
-    var searchStartTime = "";
-    var searchEndTime = "";
-    $("#searchTimeBtn").click(function(){
-        searchStartTime = $("#startTimeInput").val();
-        searchEndTime = $("#endTimeInput").val();
-        pageCount = 1;
-        getTotalPage();
-        $("#historyTable").html("");
-        $("#showMoreBtn").show();
-    });
 
     $.ajax({
         url:prefix + "/getTotalInOutByMonth",
@@ -74,9 +53,10 @@
             var outMoney = [];
             var minusMoney = [];
             $.each(data,function(i,n){
-                date.push(i.replace("20",""));
-                inMoney.push(n["in"]);
-                outMoney.push(n["out"]);
+                var d = i.replace("20","");
+                date.push(d);
+                inMoney.push(n["in"].toFixed(2));
+                outMoney.push(n["out"].toFixed(2));
                 minusMoney.push((n["out"] + n["in"]).toFixed(2));
             });
             option = {
@@ -150,90 +130,131 @@
             echarts.init(document.getElementById("inOutChart")).setOption(option);
         }
     });
-    var pageCount = 1;
-    var pageSize = 3;
-    var totalPageCount = 0;
-    getTotalPage();
-    function getTotalPage(){
+
+    function getLastInfo(){
         $.ajax({
-            url:prefix + "/getTotalPage",
+            url:prefix + "/getLastData",
             type:"POST",
-            data:"pageSize="+pageSize+"&startTime="+searchStartTime+"&endTime="+searchEndTime,
-            success:function(count){
-                totalPageCount = count;
-                getHistory();
+            success:function(data){
+                var time = data[0]["time"];
+                time = time.split(" ")[0];
+                time = time.substr(0, time.length - 3);
+                getByMonth(time);
+            }
+        });
+    }
+    getLastInfo();
+    function getByMonth(month){
+        $.ajax({
+            url:prefix + "/getMonthTongji",
+            data:"month="+month,
+            type:"POST",
+            success:function(data){
+                month = month.replace("-","年") + "月";
+                var html = "";
+                if(data["inCount"] != 0){
+                    html += "<div class=\"panel panel-success\">";
+                    html += "<div class=\"panel-heading\">";
+                    html += "<h3 class=\"panel-title\">"+month+"收入统计</h3>";
+                    html += "</div>";
+                    html += "<div class=\"panel-body\" style='padding:5px'>";
+                    html += "<table class='table table-bordered' style='margin:0'><tr>";
+                    html += "<td>";
+                    html += "该月一共收入" + data["inCount"] + "笔；累计收入" + data["totalIn"] + "元";
+                    html += "</td>";
+                    html += "<tr></tr>";
+                    html += "<td><div id=\"inChart\" style=\"width: 100%;height: 250px\"></div></td>";
+                    html += "</tr></table>";
+                    html += "</div></div>";
+                }
+                if(data["outCount"] != 0){
+                    html += "<div class=\"panel panel-danger\">";
+                    html += "<div class=\"panel-heading\">";
+                    html += "<h3 class=\"panel-title\">"+month+"支出统计</h3>";
+                    html += "</div>";
+                    html += "<div class=\"panel-body\" style='padding:5px'>";
+                    html += "<table class='table table-bordered' style='margin:0'><tr>";
+                    html += "<td>";
+                    html += "该月一共支出" + data["outCount"] + "笔；累计支出" + data["totalOut"] + "元";
+                    html += "</td>";
+                    html += "<tr></tr>";
+                    html += "<td><div id=\"outChart\" style=\"width: 100%;height: 250px\"></div></td>";
+                    html += "</tr></table>";
+                    html += "</div></div>";
+                }
+                $("#monthTongji").html(html);
+                if(data["inCount"] != 0){
+                    var items = [];
+                    var datas = [];
+                    $.each(data["inList"], function(i,n){
+                        items.push(n["item"]);
+                        datas.push({value: n["val"], name: n["item"]})
+                    });
+                    drawPie("收入统计", items, datas, "inChart");
+                }
+                if(data["outCount"] != 0){
+                    var items = [];
+                    var datas = [];
+                    $.each(data["outList"], function(i,n){
+                        items.push(n["item"]);
+                        datas.push({value: n["val"], name: n["item"]})
+                    });
+                    drawPie("支出统计", items, datas, "outChart");
+                }
             }
         });
     }
 
-    $("#showMoreBtn").click(function(){
-        if(pageCount <= totalPageCount){
-            pageCount ++;
-            console.log(pageCount+","+totalPageCount);
-            if(pageCount > totalPageCount){
-                $("#historyTable").append("<tr><td colspan='3' style='text-align: center'>没有更多的记录啦~</td></tr>");
-                $("#showMoreBtn").hide();
-            }else{
-                getHistory();
-            }
-        }
-    });
-
-    function getHistory(){
+    function drawPie(title, items, datas, id){
+        var option = {
+            title: {
+                text: title,
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: '{a} <br/>{b} : {c} ({d}%)'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left',
+                data: items
+            },
+            series: [
+                {
+                    name: title,
+                    type: 'pie',
+                    radius: '55%',
+                    center: ['50%', '60%'],
+                    data: datas,
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }
+            ]
+        };
+        echarts.init(document.getElementById(id)).setOption(option);
+    }
+    function getAllMonth(){
         $.ajax({
-            url:prefix + "/getAllInfoByPage",
+            url:prefix + "/getAllMonth",
             type:"POST",
-            data:"pageSize="+pageSize + "&pageCount=" + pageCount+"&startTime="+searchStartTime+"&endTime="+searchEndTime,
-            async:false,
             success:function(data){
                 var html = "";
                 $.each(data,function(i,n){
-                    var fenceChange = n["fenceChange"];
-                    var type = "收入";
-                    var alertType = "success";
-                    if(fenceChange.indexOf("-") != -1){
-                        fenceChange = fenceChange.replace("-", "");
-                        type = "支出";
-                        alertType = "danger";
-                    }
-                    html += "<tr><td>"+n["time"]+"</td><td>"+type+fenceChange+
-                        "元</td><td>余额："+n["remain"]+"</td></tr>";
-                    html += "<tr><td colspan='3'><span class='reasonOrigin'>"+n["reason"]+"</span>&nbsp;<button msgId='"+n["id"]+"' style='display:none' class='btn btn-default btn-xs'>修改</button></tr>";
-                    html += "<tr><td colspan='3'><div class=\"alert alert-"+alertType+"\" role=\"alert\">"+n["smsText"]+"</div></td></tr>";
+                    html += "<option value='"+n+"'>"+n+"</option>";
                 });
-                $("#historyTable").append(html);
-                $(".btn-xs").click(function(){
-                    if($(this).html() == "修改"){
-                        var reason = $(this).prev().text();
-                        $(this).prev().html("<input class='form-control reasonInput' value='"+reason+"'/>");
-                        $(this).html("提交");
-                    }else{
-                        var btn = $(this);
-                        var pre = $(this).prev();
-                        var newReason = $(".reasonInput").val();
-                        var id = $(this).attr("msgId");
-                        $.ajax({
-                            url:prefix + "/changeReason",
-                            type:"POST",
-                            data:"id="+id + "&reason=" + newReason,
-                            success:function(reason){
-                                pre.html(reason);
-                                btn.html("修改");
-                            }
-                        });
-                    }
-
-                });
+                $("#monthSelector").html(html);
             }
         });
     }
-    var i = 0;
-    $(document).click(function (){
-        i ++;
-        if(i > 10){
-            $(".btn-xs").show();
-            i = 0;
-        }
+    getAllMonth();
+    $("#monthSelector").change(function(){
+        getByMonth($(this).val());
     });
 </script>
 </html>

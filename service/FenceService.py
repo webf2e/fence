@@ -174,6 +174,40 @@ def getById(id):
     db.close()
     return data[0]
 
+#2020-06
+def getByMonth(month):
+    db = mysql.connector.connect(
+        host=gloVar.dbHost,
+        user=gloVar.dbUser,
+        passwd=gloVar.dbPwd,
+        database=gloVar.dbName
+    )
+    cursor = db.cursor()
+    sql = "select * from fenceFlow where DATE_FORMAT(time,'%Y-%m') = '{}'".format(month)
+    logging.warning("[sql]:{}".format(sql))
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    fields = cursor.description
+    db.commit()
+    db.close()
+    return changeToJsonStr(fields, data)
+
+def getAllMonth():
+    db = mysql.connector.connect(
+        host=gloVar.dbHost,
+        user=gloVar.dbUser,
+        passwd=gloVar.dbPwd,
+        database=gloVar.dbName
+    )
+    cursor = db.cursor()
+    sql = "select * from (select DATE_FORMAT(time,'%Y-%m') as month from fenceFlow) mt GROUP BY month"
+    logging.warning("[sql]:{}".format(sql))
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    db.commit()
+    db.close()
+    return data
+
 
 def changeToJsonStr(fields,data):
     finalResult = "["
