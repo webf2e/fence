@@ -110,7 +110,7 @@ def getByTime(time):
     return changeToJsonStr(fields, data)
 
 
-def getCount():
+def getCount(startTime, endTime):
     db = mysql.connector.connect(
         host=gloVar.dbHost,
         user=gloVar.dbUser,
@@ -118,7 +118,7 @@ def getCount():
         database=gloVar.dbName
     )
     cursor = db.cursor()
-    sql = "select count(id) from fenceFlow"
+    sql = "select count(id) from fenceFlow where time >= date_format('{}','%y%m%d') and  time <= date_format('{}','%y%m%d');".format(startTime, endTime)
     logging.warning("[sql]:{}".format(sql))
     cursor.execute(sql)
     data = cursor.fetchall()
@@ -127,7 +127,7 @@ def getCount():
     return data[0][0]
 
 
-def getByPage(pageCount,pageSize):
+def getByPage(startTime, endTime, pageCount,pageSize):
     db = mysql.connector.connect(
         host=gloVar.dbHost,
         user=gloVar.dbUser,
@@ -135,7 +135,7 @@ def getByPage(pageCount,pageSize):
         database=gloVar.dbName
     )
     cursor = db.cursor()
-    sql = "select * from fenceFlow order by time desc limit {},{}".format((pageCount - 1) * pageSize, pageSize)
+    sql = "select * from fenceFlow where time >= date_format('{}','%y%m%d') and  time <= date_format('{}','%y%m%d') order by time desc limit {},{}".format(startTime, endTime, (pageCount - 1) * pageSize, pageSize)
     logging.warning("[sql]:{}".format(sql))
     cursor.execute(sql)
     data = cursor.fetchall()

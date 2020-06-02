@@ -29,6 +29,13 @@
     </nav>
     <div class="container" style="width: 100%">
         <div id="inOutChart" style="width: 100%;height: 400px"></div>
+        <table>
+            <tr>
+                <td><input class="form-control" id="startTimeInput" placeholder="开始时间20200602"/></td>
+                <td><input class="form-control" id="endTimeInput" placeholder="结束时间20200602"/></td>
+                <td><button id="searchTimeBtn" class="btn btn-default">查询</button></td>
+            </tr>
+        </table>
         <table class="table table-bordered" id="historyTable" style="width: 100%">
 
         </table>
@@ -46,6 +53,17 @@
     var prefix = "/money";
     //var prefix = "";
     var inOutMonthCount = 6;
+    var searchStartTime = "";
+    var searchEndTime = "";
+    $("#searchTimeBtn").click(function(){
+        searchStartTime = $("#startTimeInput").val();
+        searchEndTime = $("#endTimeInput").val();
+        pageCount = 1;
+        getTotalPage();
+        $("#historyTable").html("");
+        $("#showMoreBtn").show();
+    });
+
     $.ajax({
         url:prefix + "/getTotalInOutByMonth",
         type:"POST",
@@ -135,15 +153,18 @@
     var pageCount = 1;
     var pageSize = 3;
     var totalPageCount = 0;
-    $.ajax({
-        url:prefix + "/getTotalPage",
-        type:"POST",
-        data:"pageSize="+pageSize,
-        success:function(count){
-            totalPageCount = count;
-            getHistory();
-        }
-    });
+    getTotalPage();
+    function getTotalPage(){
+        $.ajax({
+            url:prefix + "/getTotalPage",
+            type:"POST",
+            data:"pageSize="+pageSize+"&startTime="+searchStartTime+"&endTime="+searchEndTime,
+            success:function(count){
+                totalPageCount = count;
+                getHistory();
+            }
+        });
+    }
 
     $("#showMoreBtn").click(function(){
         if(pageCount <= totalPageCount){
@@ -162,7 +183,7 @@
         $.ajax({
             url:prefix + "/getAllInfoByPage",
             type:"POST",
-            data:"pageSize="+pageSize + "&pageCount=" + pageCount,
+            data:"pageSize="+pageSize + "&pageCount=" + pageCount+"&startTime="+searchStartTime+"&endTime="+searchEndTime,
             async:false,
             success:function(data){
                 var html = "";
@@ -211,6 +232,7 @@
         i ++;
         if(i > 10){
             $(".btn-xs").show();
+            i = 0;
         }
     });
 </script>

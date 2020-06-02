@@ -35,12 +35,24 @@ def getAllInfoByPage():
     pageCount = int(request.form.get("pageCount"))
     # 一页的大小
     pageSize = int(request.form.get("pageSize"))
-    return Response(FenceService.getByPage(pageCount, pageSize), mimetype='application/json')
+    startTime = request.form.get("startTime")
+    endTime = request.form.get("endTime")
+    if "" == startTime:
+        startTime = "00010101"
+    if "" == endTime:
+        endTime = "20691231"
+    return Response(FenceService.getByPage(startTime, endTime, pageCount, pageSize), mimetype='application/json')
 
 @monthRoute.route('/getTotalPage',methods=["POST"])
 def getTotalPage():
     pageSize = int(request.form.get("pageSize"))
-    allCount = FenceService.getCount()
+    startTime = request.form.get("startTime")
+    endTime = request.form.get("endTime")
+    if "" == startTime:
+        startTime = "00010101"
+    if "" == endTime:
+        endTime = "20691231"
+    allCount = FenceService.getCount(startTime, endTime)
     allPageCount = allCount // pageSize
     if allCount % pageSize != 0:
         return str(allPageCount + 1)
