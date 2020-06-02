@@ -47,11 +47,11 @@ def getMonthTongji():
     for data in datas:
         money = float(data["fenceChange"])
         if money < 0:
-            inCount += 1
+            outCount += 1
             totalOut += money
             outList.append({"item": data["reason"], "val": math.fabs(money)})
         else:
-            outCount += 1
+            inCount += 1
             totalIn += money
             inList.append({"item": data["reason"], "val": money})
     result["inCount"] = inCount
