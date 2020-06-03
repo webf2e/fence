@@ -200,7 +200,7 @@ def getAllMonth():
         database=gloVar.dbName
     )
     cursor = db.cursor()
-    sql = "select * from (select DATE_FORMAT(time,'%Y-%m') as month from fenceFlow) mt GROUP BY month"
+    sql = "select * from (select DATE_FORMAT(time,'%Y-%m') as month from fenceFlow) mt GROUP BY month order by month desc"
     logging.warning("[sql]:{}".format(sql))
     cursor.execute(sql)
     data = cursor.fetchall()
