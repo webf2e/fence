@@ -1,10 +1,8 @@
 import requests
 import logging
 import hashlib
-import json,datetime
+import json,datetime,os
 from util import TimeUtil
-from service import RedisService
-from util.RedisKey import redisKey
 
 appId = "5J6x0OXyjQ76886EHpixH6"
 appKey = "j1zfq7NGar5UTyZOc02PB5"
@@ -23,8 +21,13 @@ def getAuthCode():
     res = requests.post(url=url,data=data,headers=headers)
     return json.loads(res.text)["auth_token"]
 
-def pushToSingle(title,content,touchuan,clientId=RedisService.getSetting(redisKey.cid)):
+def pushToSingle(title,content,touchuan):
     try:
+        clientId = os.getenv("MSG_PUSH_CLIENTID")
+        logging.info("当前的clientID为：{}".format(clientId))
+        if "" == clientId or clientId is None:
+            logging.error("clientID为空")
+            return "no clientID"
         headers = {"Content-Type": "application/json", "authtoken": getAuthCode()}
         time = datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d %H:%M:%S")
         title = "【资金管理】 {}".format(title)
@@ -61,10 +64,3 @@ def pushToSingle(title,content,touchuan,clientId=RedisService.getSetting(redisKe
     except Exception as e:
         return "ERROR"
         print(e)
-
-
-def getUserStatus(clientId=RedisService.getSetting(redisKey.cid)):
-    headers = {"Content-Type": "application/json","authtoken":getAuthCode()}
-    pushUrl = "https://restapi.getui.com/v1/{}/user_status/{}".format(appId,clientId)
-    r = requests.get(url=pushUrl,headers=headers)
-    logging.warning("获取用户状态结果：{}".format(r.text))
