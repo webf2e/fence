@@ -4,6 +4,7 @@ from route.UploadRoute import uploadRoute
 from route.MonthRoute import monthRoute
 from route.DetailRoute import detailRoute
 from service import InitService
+from util import Log
 
 app = Flask(__name__)
 app.register_blueprint(indexRoute)
@@ -15,6 +16,7 @@ app.register_blueprint(detailRoute)
 def login():
     return app.send_static_file("index.html")
 
+Log.init()
 InitService.init()
 app.config['JSON_AS_ASCII'] = False
 app.config['MAX_CONTENT_LENGTH'] = 50*1024*1024
